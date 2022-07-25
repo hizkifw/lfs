@@ -43,24 +43,21 @@ lfs-base:
       useradd -s /bin/bash -g lfs -m -k /dev/null lfs; \
       echo "lfs:lfs" | chpasswd; \
       echo "lfs ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers; \
-      chown -vR lfs $LFS/*;
+      chown -vR lfs $LFS/* /src/scripts;
 
 lfs-toolchain:
   FROM +lfs-base
 
   # Run as the user
   USER lfs
-  ENV LC_ALL=POSIX \
-      LFS_TGT=$(uname -m)-lfs-linux-gnu \
-      PATH=$LFS/tools/bin:$PATH \
-      CONFIG_SITE=$LFS/usr/share/config.site \
-      MAKEFLAGS=-j$(nproc)
   WORKDIR $LFS/sources
+  COPY ./scripts/env.sh /src/scripts/env.sh
 
   # Build binutils
   RUN set -ex; \
-      tar -xf binutils-*.tar.xz; \
-      cd binutils-*; \
+      . /src/scripts/env.sh; \
+      tar -xf binutils-2.38.tar.xz; \
+      cd binutils-2.38; \
       mkdir -v build; \
       cd build; \
       ../configure \
@@ -72,7 +69,7 @@ lfs-toolchain:
       make; \
       make install; \
       cd ..; \
-      rm -rf binutils-*
+      rm -rf binutils-2.38
 
 
 # vi: ft=dockerfile
